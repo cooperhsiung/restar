@@ -1,14 +1,12 @@
 {
   "name": "restar",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "web framework for rest api",
   "main": "index.js",
   "directories": {
     "lib": "lib"
   },
-  "dependencies": {
-    "body-parser": "^1.18.3"
-  },
+  "dependencies": {},
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

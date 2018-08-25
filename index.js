@@ -9,7 +9,7 @@ const noop = () => {};
 
 class Restar {
   constructor() {
-    this.routes = { '/': { get: [() => 'Hello Restar!'] } };
+    this.routes = {};
     this.plugins = [];
   }
 
@@ -23,18 +23,24 @@ class Restar {
   }
 
   fire() {
+    this.routes['/'] = this.routes['/'] || { get: [() => 'Hello Restar!'] };
     return (req, res) => {
       const urlEntity = parseUrl(req.url);
       req.query = parseQuery(urlEntity.query);
+
       reply(req, res, async () => {
+        for (let plugin of this.plugins) {
+          let outcome = await plugin(req, res, noop);
+          if (outcome !== undefined && typeof outcome !== 'function') {
+            return;
+          }
+        }
+
         const route = this.routes[urlEntity.pathname];
         if (route) {
           let payloads = route[req.method.toLowerCase()] || route['all'];
           if (payloads) {
             try {
-              for (let plugin of this.plugins) {
-                await plugin(req, res, noop);
-              }
               for (let payload of payloads) {
                 const outcome = await payload(req, res, noop);
                 if (outcome !== undefined && typeof outcome !== 'function') {
