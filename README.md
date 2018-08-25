@@ -1,6 +1,7 @@
 # Restar
 
 [![NPM Version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url]
 
 Web framework for rest api, async/await supported, simplistic with zero dependencies.
 
@@ -57,3 +58,5 @@ MIT
 
 [npm-image]: https://img.shields.io/npm/v/restar.svg
 [npm-url]: https://www.npmjs.com/package/restar
+[travis-image]: https://travis-ci.org/cooperhsiung/restar.svg?branch=master
+[travis-url]: https://travis-ci.org/cooperhsiung/restar
