@@ -6,10 +6,8 @@
   "directories": {
     "lib": "lib"
   },
-  "dependencies": {},
-  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --reporter spec --bail --check-leaks test/"
   },
   "repository": {
     "type": "git",
@@ -20,10 +18,19 @@
     "api",
     "web"
   ],
+  "engines": {
+    "node": ">=8"
+  },
   "author": "Cooper Hsiung",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/cooperhsiung/restar/issues"
   },
-  "homepage": "https://github.com/cooperhsiung/restar#readme"
+  "homepage": "https://github.com/cooperhsiung/restar#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
+    "supertest": "^3.1.0"
+  }
 }
