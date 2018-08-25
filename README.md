@@ -2,7 +2,7 @@
 
 [![NPM Version][npm-image]][npm-url]
 
-Web framework for rest api, async/await supported, use middwares like express.
+Web framework for rest api, async/await supported, simplistic with zero dependencies.
 
 ## Installation
 
@@ -50,6 +50,10 @@ app.listen(3000);
 looking for usage and examples
 
 https://github.com/cooperhsiung/restar-examples
+
+## License
+
+MIT
 
 [npm-image]: https://img.shields.io/npm/v/restar.svg
 [npm-url]: https://www.npmjs.com/package/restar

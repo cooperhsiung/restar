@@ -29,33 +29,33 @@ class Restar {
       req.query = parseQuery(urlEntity.query);
 
       reply(req, res, async () => {
-        for (let plugin of this.plugins) {
-          let outcome = await plugin(req, res, noop);
-          if (outcome !== undefined && typeof outcome !== 'function') {
-            return;
+        try {
+          for (let plugin of this.plugins) {
+            let outcome = await plugin(req, res, noop);
+            if (outcome !== undefined) {
+              return;
+            }
           }
-        }
 
-        const route = this.routes[urlEntity.pathname];
-        if (route) {
-          let payloads = route[req.method.toLowerCase()] || route['all'];
-          if (payloads) {
-            try {
+          const route = this.routes[urlEntity.pathname];
+          if (route) {
+            let payloads = route[req.method.toLowerCase()] || route['all'];
+            if (payloads) {
               for (let payload of payloads) {
                 const outcome = await payload(req, res, noop);
-                if (outcome !== undefined && typeof outcome !== 'function') {
+                if (outcome !== undefined) {
                   return send(res, 200, outcome);
                 }
               }
-            } catch (e) {
-              console.error(e);
-              send(res, 500, 'Internal Server Error');
+            } else {
+              send(res, 404, 'Not Support');
             }
           } else {
-            send(res, 404, 'Not Support');
+            send(res, 404, 'Not Found');
           }
-        } else {
-          send(res, 404, 'Not Found');
+        } catch (e) {
+          console.error(e);
+          send(res, 500, 'Internal Server Error');
         }
       });
     };
@@ -86,3 +86,30 @@ class Restar {
 });
 
 module.exports = Restar;
+
+
+let app = new Restar();
+
+app.use((req, res) => {
+  res.setHeader('X-Powered-By', 'Restar');
+});
+
+app.get('/test', () => ({ name: 'restar' }));
+
+app.post('/test', ({ param: { name } }) => {
+  return name || null;
+});
+
+app.get(
+  '/sleep',
+  async () => {
+    await sleep();
+  },
+  () => 'sleep 1s'
+);
+
+function sleep(delay = 1000) {
+  return new Promise(resolve => setTimeout(resolve, delay));
+}
+
+app.listen(3000);
