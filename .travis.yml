@@ -6,13 +6,14 @@ node_js:
   - "8"
 
 install:
-    - npm install --no-save nyc coveralls
+  - npm i
+  - npm install --no-save nyc coveralls
 
 script:
   - npm test
 
 after_script:
-    - nyc report --reporter=text-lcov | coveralls
+  - nyc report --reporter=text-lcov | coveralls
 
 notifications:
   email:
