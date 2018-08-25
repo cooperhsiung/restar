@@ -5,6 +5,7 @@ const http = require('http');
 const send = require('./lib/send');
 const reply = require('./lib/reply');
 const { url: parseUrl, query: parseQuery } = require('./lib/parse');
+const noop = () => {};
 
 class Restar {
   constructor() {
@@ -23,36 +24,32 @@ class Restar {
 
   fire() {
     return (req, res) => {
-      let urlEntity = parseUrl(req.url);
+      const urlEntity = parseUrl(req.url);
       req.query = parseQuery(urlEntity.query);
-      let path = urlEntity.pathname;
       reply(req, res, async () => {
-        let route = this.routes[path];
+        const route = this.routes[urlEntity.pathname];
         if (route) {
           let payloads = route[req.method.toLowerCase()] || route['all'];
           if (payloads) {
             try {
               for (let plugin of this.plugins) {
-                await plugin(req, res);
+                await plugin(req, res, noop);
               }
               for (let payload of payloads) {
-                let outcome = await payload(req, res);
-                if (outcome !== undefined || typeof outcome !== 'function') {
-                  return send(res, outcome);
+                const outcome = await payload(req, res, noop);
+                if (outcome !== undefined && typeof outcome !== 'function') {
+                  return send(res, 200, outcome);
                 }
               }
             } catch (e) {
               console.error(e);
-              res.statusCode = 500;
-              res.end('Internal Server Error');
+              send(res, 500, 'Internal Server Error');
             }
           } else {
-            res.statusCode = 404;
-            res.end('Not Support');
+            send(res, 404, 'Not Support');
           }
         } else {
-          res.statusCode = 404;
-          res.end('Not Found');
+          send(res, 404, 'Not Found');
         }
       });
     };
