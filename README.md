@@ -2,6 +2,7 @@
 
 [![NPM Version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
+[![Coverage Status][coverage-image]][coverage-url]
 [![Node Version][node-image]][node-url]
 
 Web framework for rest api, async/await supported, simplistic with zero dependencies.
@@ -62,5 +63,7 @@ MIT
 [travis-image]: https://travis-ci.org/cooperhsiung/restar.svg?branch=master
 [travis-url]: https://travis-ci.org/cooperhsiung/restar
 [travis-url]: https://travis-ci.org/cooperhsiung/restar
+[coverage-image]: https://coveralls.io/repos/github/cooperhsiung/restar/badge.svg
+[coverage-url]: https://coveralls.io/github/cooperhsiung/restar
 [node-image]: https://img.shields.io/badge/node.js-%3E=8-brightgreen.svg
 [node-url]: https://nodejs.org/download/

@@ -7,7 +7,7 @@ node_js:
 
 install:
   - npm i
-  - npm install --no-save istanbul coveralls
+  - npm install --no-save istanbul@next coveralls
 
 script:
   - istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec
