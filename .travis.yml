@@ -5,10 +5,18 @@ node_js:
   - "9"
   - "8"
 
+install:
+    - npm install --no-save nyc coveralls
+
 script:
   - npm test
+
+after_script:
+    - nyc report --reporter=text-lcov | coveralls
 
 notifications:
   email:
     on_success: never
     on_failure: always
+
+
