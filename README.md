@@ -52,7 +52,7 @@ app.listen(3000);
 
 app.`[get|post|put|head|delete|options|all]`(handler1,handler2...)
 
-handler(req?:IncomingMessage,res?:IncomingMessage) : void|any
+handler(req?:IncomingMessage,res?:IncomingMessage) : void|string|json|Buffer|ReadStream
 
 ```javascript
 app.get('/sleep', async () => {
