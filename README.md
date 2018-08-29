@@ -56,6 +56,8 @@ app.listen(3000);
 
 ## Async handler
 
+app.`[get|post|put|head|delete|options|all]`(handler1,handler2...)
+
 handler(req?:IncomingMessage,res?:IncomingMessage) : void|any
 
 ```javascript
