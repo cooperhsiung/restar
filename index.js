@@ -5,7 +5,6 @@ const http = require('http');
 const send = require('./lib/send');
 const reply = require('./lib/reply');
 const parse = require('./lib/parse');
-const noop = () => {};
 
 class Restar {
   constructor() {
@@ -19,11 +18,15 @@ class Restar {
   }
 
   use(plugin) {
+    if (typeof plugin !== 'function') {
+      throw new TypeError('plugin should be type of function');
+    }
     this.plugins.push(plugin);
   }
 
   fire() {
     this.routes['/'] = this.routes['/'] || { get: [() => 'Hello Restar!'] };
+
     return (req, res) => {
       const urlEntity = parse.url(req.url);
       req.query = parse.query(urlEntity.query);
@@ -31,7 +34,7 @@ class Restar {
       reply(req, res, async () => {
         try {
           for (let plugin of this.plugins) {
-            let outcome = await plugin(req, res, noop);
+            const outcome = await promisify(plugin);
             if (outcome !== undefined) {
               return;
             }
@@ -42,9 +45,10 @@ class Restar {
             let payloads = route[req.method.toLowerCase()] || route['all'];
             if (payloads) {
               for (let payload of payloads) {
-                const outcome = await payload(req, res, noop);
+                const outcome = await promisify(payload);
                 if (outcome !== undefined) {
-                  return send(res, 200, outcome);
+                  send(res, 200, outcome);
+                  return;
                 }
               }
             } else {
@@ -58,6 +62,22 @@ class Restar {
           send(res, 500, 'Internal Server Error');
         }
       });
+
+      function promisify(handler) {
+        if (handler.length < 3) {
+          return handler(req, res);
+        } else {
+          return new Promise((resolve, reject) => {
+            handler(req, res, err => {
+              if (err) {
+                return reject(err);
+              }
+              resolve(undefined);
+            });
+            setTimeout(resolve, 0, !undefined);
+          });
+        }
+      }
     };
   }
 }
