@@ -13,6 +13,12 @@ Web framework for rest api, async/await supported, simplistic with zero dependen
 npm i restar -S
 ```
 
+## Examples
+
+Looking for usage and examples
+
+https://github.com/cooperhsiung/restar-examples
+
 ## Usage
 
 ```javascript
@@ -48,11 +54,27 @@ function sleep(delay = 1000) {
 app.listen(3000);
 ```
 
-## Examples
+## Async handler
 
-looking for usage and examples
+```javascript
+app.get('/sleep', async () => {
+  await sleep();
+  return 'sleep 1s';
+});
 
-https://github.com/cooperhsiung/restar-examples
+function sleep(delay = 1000) {
+  return new Promise(resolve => setTimeout(resolve, delay));
+}
+```
+
+## Plugin
+
+Like express middleware
+
+```
+const serveStatic = require('serve-static');
+app.use(serveStatic(path.join(__dirname, 'public')));
+```
 
 ## License
 
