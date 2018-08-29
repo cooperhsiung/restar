@@ -13,12 +13,6 @@ Web framework for rest api, async/await supported, simplistic with zero dependen
 npm i restar -S
 ```
 
-## Examples
-
-Looking for usage and examples
-
-https://github.com/cooperhsiung/restar-examples
-
 ## Usage
 
 ```javascript
@@ -79,6 +73,12 @@ Like express middleware
 const serveStatic = require('serve-static');
 app.use(serveStatic(path.join(__dirname, 'public')));
 ```
+
+## Examples
+
+Looking for more usages and examples
+
+https://github.com/cooperhsiung/restar-examples
 
 ## License
 
