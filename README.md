@@ -56,6 +56,8 @@ app.listen(3000);
 
 ## Async handler
 
+handler(req?:IncomingMessage,res?:IncomingMessage) : void|any
+
 ```javascript
 app.get('/sleep', async () => {
   await sleep();
