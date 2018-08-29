@@ -4,7 +4,7 @@
 const http = require('http');
 const send = require('./lib/send');
 const reply = require('./lib/reply');
-const { url: parseUrl, query: parseQuery } = require('./lib/parse');
+const parse = require('./lib/parse');
 const noop = () => {};
 
 class Restar {
@@ -25,8 +25,8 @@ class Restar {
   fire() {
     this.routes['/'] = this.routes['/'] || { get: [() => 'Hello Restar!'] };
     return (req, res) => {
-      const urlEntity = parseUrl(req.url);
-      req.query = parseQuery(urlEntity.query);
+      const urlEntity = parse.url(req.url);
+      req.query = parse.query(urlEntity.query);
 
       reply(req, res, async () => {
         try {
