@@ -1,6 +1,6 @@
 {
   "name": "restar",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "web framework for rest api",
   "main": "index.js",
   "directories": {

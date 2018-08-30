@@ -72,9 +72,11 @@ class Restar {
               if (err) {
                 return reject(err);
               }
-              resolve(undefined);
+              resolve();
             });
-            setTimeout(resolve, 0, !undefined);
+            res.on('finish', () => {
+              resolve(!undefined);
+            });
           });
         }
       }
