@@ -5,7 +5,7 @@
 [![Coverage Status][coverage-image]][coverage-url]
 [![Node Version][node-image]][node-url]
 
-Web framework for rest api, async/await supported, simplistic with zero dependencies.
+Web library for rest api, async/await supported, simplistic with zero dependencies.
 
 ## Installation
 
@@ -69,7 +69,7 @@ function sleep(delay = 1000) {
 
 Like express middleware
 
-```
+```javascript
 const serveStatic = require('serve-static');
 app.use(serveStatic(path.join(__dirname, 'public')));
 ```
