@@ -1,5 +1,6 @@
 # Editors
 .idea
+.vscode
 
 # Logs
 npm-debug.log*

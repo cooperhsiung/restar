@@ -80,6 +80,22 @@ Looking for more usages and examples
 
 https://github.com/cooperhsiung/restar-examples
 
+## Boilplate
+
+Restar app boilplate
+
+https://github.com/cooperhsiung/restar-kit
+
+## Caveats
+
+`path-to-regex` is unsupported
+
+ - any urls like **http://localhost:3000/user/1** could be converted to **http://localhost:3000/user?id=1**
+
+- when existing massive routes, it will hurt the preformance with `path-to-regex` 
+
+In view of the above, in most cases we may not need path-to-regex
+
 ## License
 
 MIT
