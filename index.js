@@ -8,8 +8,10 @@ const parse = require('./lib/parse');
 
 class Restar {
   constructor() {
-    this.routes = {};
-    this.plugins = [];
+    this.handlers = { '/': { get: [() => 'Hello Restar!'] } };
+    this.plugins = { '/': [] };
+    this.plugends = { '/': [] };
+    this.errHdlers = {};
   }
 
   listen(...args) {
@@ -17,48 +19,103 @@ class Restar {
     return server.listen(...args);
   }
 
-  use(plugin) {
-    if (typeof plugin !== 'function') {
-      throw new TypeError('plugin should be type of function');
+  catch(path, errHdlers) {
+    if (typeof path === 'function') {
+      this.errHdlers['/'] = path;
+    } else if (!path.startsWith('/')) {
+      throw new Error('path should start with /');
+    } else {
+      Object.assign(this.errHdlers, { [path]: errHdlers });
     }
-    this.plugins.push(plugin);
+  }
+
+  use(path, ...plugins) {
+    if (typeof path === 'function') {
+      this.plugins['/'] = this.plugins['/'].concat(path);
+    } else if (!path.startsWith('/')) {
+      throw new Error('path should start with /');
+    } else {
+      this.plugins[path] = (this.plugins[path] || []).concat(plugins);
+    }
+  }
+
+  end(path, ...plugends) {
+    if (typeof path === 'function') {
+      this.plugends['/'] = this.plugends['/'].concat(path);
+    } else if (!path.startsWith('/')) {
+      throw new Error('path should start with /');
+    } else {
+      this.plugends[path] = (this.plugends[path] || []).concat(plugends);
+    }
   }
 
   fire() {
-    this.routes['/'] = this.routes['/'] || { get: [() => 'Hello Restar!'] };
-
     return (req, res) => {
+      // console.log('========= req.url', req.url);
       const urlEntity = parse.url(req.url);
       req.query = parse.query(urlEntity.query);
+      req.path = parse.path(urlEntity.pathname);
+
+      let plugins = this.plugins['/'];
+      let plugends = this.plugends['/'];
+      let errHdler = this.errHdlers['/'];
+
+      req.path
+        .split('/')
+        .filter(e => e)
+        .reduce((s, e) => {
+          s += '/' + e;
+          plugins = plugins.concat(this.plugins[s] || []);
+          plugends = plugends.concat(this.plugends[s] || []);
+          if (this.errHdlers[s]) {
+            errHdler = this.errHdlers[s];
+          }
+          return s;
+        }, '');
 
       reply(req, res, async () => {
         try {
-          for (let plugin of this.plugins) {
+          for (let plugin of plugins) {
             const outcome = await promisify(plugin);
             if (outcome !== undefined) {
               return;
             }
           }
 
-          const route = this.routes[urlEntity.pathname];
-          if (route) {
-            let payloads = route[req.method.toLowerCase()] || route['all'];
+          const handler = this.handlers[req.path];
+          if (handler) {
+            let payloads = handler[req.method.toLowerCase()] || handler['all'];
             if (payloads) {
               for (let payload of payloads) {
                 const outcome = await promisify(payload);
+
+                for (let plugend of plugends) {
+                  const outcome = await promisify(plugend);
+                  if (outcome !== undefined) {
+                    return;
+                  }
+                }
+
                 if (outcome !== undefined) {
                   send(res, 200, outcome);
                   return;
                 }
               }
             } else {
-              send(res, 404, 'Not Support');
+              send(res, 404, 'Unsupported');
             }
           } else {
             send(res, 404, 'Not Found');
           }
         } catch (e) {
-          console.error(e);
+          // console.error(e);
+          if (errHdler) {
+            const outcome = await promisify(errHdler(e));
+            if (outcome !== undefined) {
+              send(res, 200, outcome);
+              return;
+            }
+          }
           send(res, 500, 'Internal Server Error');
         }
       });
@@ -86,7 +143,7 @@ class Restar {
 
 /*
 *
-* @route { path { method { payloads } } }
+* @handler { path { method { payloads } } }
 *
 * */
 
@@ -98,11 +155,11 @@ class Restar {
     if (!path.startsWith('/')) {
       throw new Error('path should start with /');
     }
-    let route = this.routes[path];
-    if (route) {
-      route[method] = payloads;
+    let handler = this.handlers[path];
+    if (handler) {
+      handler[method] = payloads;
     } else {
-      Object.assign(this.routes, { [path]: { [method]: payloads } });
+      Object.assign(this.handlers, { [path]: { [method]: payloads } });
     }
   };
 });
