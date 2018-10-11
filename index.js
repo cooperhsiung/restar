@@ -5,13 +5,14 @@ const http = require('http');
 const send = require('./lib/send');
 const reply = require('./lib/reply');
 const parse = require('./lib/parse');
+const promis = require('./lib/promis');
 
 class Restar {
   constructor() {
     this.handlers = { '/': { get: [() => 'Hello Restar!'] } };
-    this.plugins = { '/': [] };
-    this.plugends = { '/': [] };
-    this.errHdlers = {};
+    this.preHandlers = { '/': [] };
+    this.endHandlers = { '/': [] };
+    this.errHandlers = { '/': [] };
   }
 
   listen(...args) {
@@ -19,133 +20,88 @@ class Restar {
     return server.listen(...args);
   }
 
-  catch(path, errHdlers) {
-    if (typeof path === 'function') {
-      this.errHdlers['/'] = path;
-    } else if (!path.startsWith('/')) {
-      throw new Error('path should start with /');
-    } else {
-      Object.assign(this.errHdlers, { [path]: errHdlers });
-    }
-  }
-
-  use(path, ...plugins) {
-    if (typeof path === 'function') {
-      this.plugins['/'] = this.plugins['/'].concat(path);
-    } else if (!path.startsWith('/')) {
-      throw new Error('path should start with /');
-    } else {
-      this.plugins[path] = (this.plugins[path] || []).concat(plugins);
-    }
-  }
-
-  end(path, ...plugends) {
-    if (typeof path === 'function') {
-      this.plugends['/'] = this.plugends['/'].concat(path);
-    } else if (!path.startsWith('/')) {
-      throw new Error('path should start with /');
-    } else {
-      this.plugends[path] = (this.plugends[path] || []).concat(plugends);
-    }
-  }
-
   fire() {
     return (req, res) => {
-      // console.log('========= req.url', req.url);
+      let handlers = this.handlers['/'].get;
+      let preHandlers = this.preHandlers['/'];
+      let endHandlers = this.endHandlers['/'];
+      let errHandlers = this.errHandlers['/'];
+
       const urlEntity = parse.url(req.url);
       req.query = parse.query(urlEntity.query);
       req.path = parse.path(urlEntity.pathname);
 
-      let plugins = this.plugins['/'];
-      let plugends = this.plugends['/'];
-      let errHdler = this.errHdlers['/'];
+      const stacks = req.path.split('/').filter(e => e);
+      stacks.reduce((s, e, i) => {
+        s += '/' + e;
+        preHandlers = preHandlers.concat(this.preHandlers[s] || []);
+        endHandlers = endHandlers.concat(this.endHandlers[s] || []);
+        if (this.errHandlers[s]) {
+          errHandlers = this.errHandlers[s];
+        }
 
-      req.path
-        .split('/')
-        .filter(e => e)
-        .reduce((s, e) => {
-          s += '/' + e;
-          plugins = plugins.concat(this.plugins[s] || []);
-          plugends = plugends.concat(this.plugends[s] || []);
-          if (this.errHdlers[s]) {
-            errHdler = this.errHdlers[s];
+        if (i === stacks.length - 1) {
+          const mounts = this.handlers[s];
+          if (mounts) {
+            handlers = mounts[req.method.toLowerCase()] || mounts['all'];
+          } else {
+            handlers = [];
           }
-          return s;
-        }, '');
+        }
+        return s;
+      }, '');
 
       reply(req, res, async () => {
         try {
-          for (let plugin of plugins) {
-            const outcome = await promisify(plugin);
-            if (outcome !== undefined) {
-              return;
-            }
-          }
-
-          const handler = this.handlers[req.path];
-          if (handler) {
-            let payloads = handler[req.method.toLowerCase()] || handler['all'];
-            if (payloads) {
-              for (let payload of payloads) {
-                const outcome = await promisify(payload);
-
-                for (let plugend of plugends) {
-                  const outcome = await promisify(plugend);
-                  if (outcome !== undefined) {
-                    return;
-                  }
-                }
-
-                if (outcome !== undefined) {
-                  send(res, 200, outcome);
-                  return;
-                }
-              }
-            } else {
-              send(res, 404, 'Unsupported');
-            }
-          } else {
-            send(res, 404, 'Not Found');
-          }
+          const { next: _next } = await compose(preHandlers);
+          if (!_next) return;
+          const { next } = await dispose(handlers, endHandlers);
+          if (next) send(res, 404, 'Not Found');
         } catch (e) {
-          // console.error(e);
-          if (errHdler) {
-            const outcome = await promisify(errHdler(e));
-            if (outcome !== undefined) {
-              send(res, 200, outcome);
-              return;
+          const { next } = await dispose(errHandlers, endHandlers);
+          if (next) send(res, 500, 'Internal Server Error');
+        }
+
+        async function dispose(handlers, endHandlers) {
+          const { result } = await compose(handlers);
+          if (result !== undefined) {
+            const { next } = await compose(endHandlers);
+            if (next) {
+              send(res, 200, result);
+              return { next: false, result };
             }
           }
-          send(res, 500, 'Internal Server Error');
+          return { next: true };
+        }
+
+        async function compose(handlers) {
+          for (let handler of handlers) {
+            const result = await promis(handler, req, res);
+            if (result !== undefined) {
+              return { next: false, result }; // !next
+            }
+          }
+          return { next: true }; // next
         }
       });
-
-      function promisify(handler) {
-        if (handler.length < 3) {
-          return handler(req, res);
-        } else {
-          return new Promise((resolve, reject) => {
-            handler(req, res, err => {
-              if (err) {
-                return reject(err);
-              }
-              resolve();
-            });
-            res.on('finish', () => {
-              resolve(!undefined);
-            });
-          });
-        }
-      }
     };
   }
 }
 
-/*
-*
-* @handler { path { method { payloads } } }
-*
-* */
+const nameEnum = { use: 'preHandlers', end: 'endHandlers', catch: 'errHandlers' };
+
+['use', 'end', 'catch'].forEach(hook => {
+  Restar.prototype[hook] = function(path, ...payloads) {
+    const proto = nameEnum[hook];
+    if (typeof path === 'function') {
+      this[proto]['/'] = this[proto]['/'].concat(path).concat(payloads);
+    } else if (!path.startsWith('/')) {
+      throw new Error('path should start with /');
+    } else {
+      this[proto][path] = (this[proto][path] || []).concat(payloads);
+    }
+  };
+});
 
 ['get', 'post', 'put', 'head', 'delete', 'options', 'all'].forEach(method => {
   Restar.prototype[method] = function(path, ...payloads) {
@@ -155,7 +111,7 @@ class Restar {
     if (!path.startsWith('/')) {
       throw new Error('path should start with /');
     }
-    let handler = this.handlers[path];
+    const handler = this.handlers[path];
     if (handler) {
       handler[method] = payloads;
     } else {
