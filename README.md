@@ -13,6 +13,18 @@ Web library for rest api, async/await supported, simplistic with zero dependenci
 npm i restar -S
 ```
 
+## Advantages
+
+- respond elegantly
+
+```javascript
+
+```
+- error handling elegantly
+- comprehensible middleware
+- async/await supported
+- mount static directory with route
+
 ## Usage
 
 ```javascript

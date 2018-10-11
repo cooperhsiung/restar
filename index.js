@@ -31,7 +31,7 @@ class Restar {
 
       reply(req, res, async () => {
         try {
-          if (!(await compose(preHandlers).next)) return;
+          if (!(await compose(preHandlers)).next) return;
           const { next } = await dispose(handlers, endHandlers);
           if (next) send(res, 404, 'Not Found');
         } catch (e) {
@@ -93,3 +93,87 @@ const nameEnum = { use: 'preHandlers', end: 'endHandlers', catch: 'errHandlers' 
 });
 
 module.exports = Restar;
+
+const path = require('path');
+const serveStatic = require('serve-static');
+
+const app = new Restar();
+
+app.use(serveStatic(path.join(__dirname, 'public')));
+// app.use('/page', require('./plugins/route-static'), serveStatic(path.join(__dirname, 'public')));
+// app.end(express.static(path.join(__dirname, 'public')));
+
+// app.use('/hello', (req, res) => {
+//   // return 'hello';
+//   return { a: 1 };
+// });
+
+app.use(req => {
+  req.startAt = Date.now();
+});
+
+app.end('/hello', (req, res) => {
+  // return 'hello';
+  // return { a: 1 };
+  console.log(req.startAt);
+  console.log(Date.now() - req.startAt);
+});
+
+app.use('/user', (req, res) => {
+  console.log('mount user');
+});
+
+app.use('/user/login', (req, res) => {
+  console.log('mount login');
+});
+
+app.get('/user/login', (req, res) => {
+  throw new Error('err1');
+
+  // return 'login';
+});
+
+app.get('/user/register', (req, res) => {
+  return 'register';
+});
+
+app.get('/test', (req, res) => {
+  throw new Error('err1');
+  // return 'hello';
+});
+
+app.get('/hello', async (req, res) => {
+  // return 'hello';
+  await sleep(1000);
+  return { a: 1 };
+});
+
+app.get('/test', (req, res) => {
+  throw new Error('err1');
+  // return 'hello';
+});
+
+function sleep(delay = 1000) {
+  return new Promise(resolve => setTimeout(resolve, delay));
+}
+
+app.catch(e => (req, res) => {
+  return 'err catch globle';
+});
+
+// app.catch('/user', e => (req, res) => {
+//   console.log(e);
+//   return 'err catch user';
+// });
+
+// app.catch('/user/login',(req, res) => {
+//   return 'err catch login';
+// });
+
+// console.log(app.plugins);
+// console.log(app.errHdlers);
+// console.log(app.plugends);
+// console.log(app.plugends)
+// console.log(app.plugins['/hello'][0].toString())
+
+app.listen(5000);
