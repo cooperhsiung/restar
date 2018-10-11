@@ -31,8 +31,7 @@ class Restar {
 
       reply(req, res, async () => {
         try {
-          const { next: _next } = await compose(preHandlers);
-          if (!_next) return;
+          if (!(await compose(preHandlers).next)) return;
           const { next } = await dispose(handlers, endHandlers);
           if (next) send(res, 404, 'Not Found');
         } catch (e) {
