@@ -18,12 +18,71 @@ npm i restar -S
 - respond elegantly
 
 ```javascript
-
+app.get('/hello', () => {
+  // return 'hello';
+  return { s: 'hello' };
+});
 ```
-- error handling elegantly
+
 - comprehensible middleware
+
+```javascript
+app.use(req => {
+  req.startAt = Date.now();
+});
+
+app.get('/hello', () => {
+  return 'hello';
+});
+
+app.end((req, res) => {
+  res.setHeader('X-Response-Time', `${Date.now() - req.startAt}ms`);
+});
+
+/* only /hello set response time */
+// app.end('/hello', (req, res) => {
+//   res.setHeader('X-Response-Time', `${Date.now() - req.startAt}ms`);
+// });
+```
+
+- error handling elegantly
+
+```javascript
+app.get('/test', () => {
+  throw new Error('test err');
+});
+
+app.catch(e => (req, res) => {
+  return e.message || 'an error';
+});
+
+/* catch errors in route*/
+// app.catch('/test', e => (req, res) => {
+//   return e.message + '2' || 'an error';
+// });
+```
+
 - async/await supported
+
+```javascript
+app.get('/sleep', async () => {
+  await sleep();
+  return 'sleep 1s';
+});
+
+function sleep(delay = 1000) {
+  return new Promise(resolve => setTimeout(resolve, delay));
+}
+```
+
 - mount static directory with route
+
+```javascript
+const serveStatic = require('serve-static');
+app.use(serveStatic(path.join(__dirname, 'public')));
+/*serve static in route*/
+// app.use('/doc', routeStatic, serveStatic(path.join(__dirname, 'public', 'doc')));
+```
 
 ## Usage
 
@@ -77,13 +136,35 @@ function sleep(delay = 1000) {
 }
 ```
 
-## Plugin
+## API
+
+### app.use((req,res,next?)=>{})
 
 Like express middleware
 
 ```javascript
 const serveStatic = require('serve-static');
 app.use(serveStatic(path.join(__dirname, 'public')));
+```
+
+### app.end((req,res,next?)=>{})
+
+Like express middleware, execute after route handling
+
+```javascript
+app.end((req, res) => {
+  res.setHeader('X-Response-Time', `${Date.now() - req.startAt}ms`);
+});
+```
+
+### app.catch(e=>(req,res,next?)=>{})
+
+error handling
+
+```javascript
+app.catch(e => () => {
+  return e.message || 'an error';
+});
 ```
 
 ## Examples
