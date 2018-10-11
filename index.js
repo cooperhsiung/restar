@@ -5,6 +5,7 @@ const http = require('http');
 const send = require('./lib/send');
 const reply = require('./lib/reply');
 const parse = require('./lib/parse');
+const match = require('./lib/match');
 const promis = require('./lib/promis');
 
 class Restar {
@@ -22,34 +23,11 @@ class Restar {
 
   fire() {
     return (req, res) => {
-      let handlers = this.handlers['/'].get;
-      let preHandlers = this.preHandlers['/'];
-      let endHandlers = this.endHandlers['/'];
-      let errHandlers = this.errHandlers['/'];
-
       const urlEntity = parse.url(req.url);
       req.query = parse.query(urlEntity.query);
       req.path = parse.path(urlEntity.pathname);
 
-      const stacks = req.path.split('/').filter(e => e);
-      stacks.reduce((s, e, i) => {
-        s += '/' + e;
-        preHandlers = preHandlers.concat(this.preHandlers[s] || []);
-        endHandlers = endHandlers.concat(this.endHandlers[s] || []);
-        if (this.errHandlers[s]) {
-          errHandlers = this.errHandlers[s];
-        }
-
-        if (i === stacks.length - 1) {
-          const mounts = this.handlers[s];
-          if (mounts) {
-            handlers = mounts[req.method.toLowerCase()] || mounts['all'];
-          } else {
-            handlers = [];
-          }
-        }
-        return s;
-      }, '');
+      const { handlers, preHandlers, endHandlers, buildErrHandlers } = match.call(this, req);
 
       reply(req, res, async () => {
         try {
@@ -58,17 +36,18 @@ class Restar {
           const { next } = await dispose(handlers, endHandlers);
           if (next) send(res, 404, 'Not Found');
         } catch (e) {
-          const { next } = await dispose(errHandlers, endHandlers);
+          // console.log(e);
+          const { next } = await dispose(buildErrHandlers(e), endHandlers);
           if (next) send(res, 500, 'Internal Server Error');
         }
 
         async function dispose(handlers, endHandlers) {
-          const { result } = await compose(handlers);
-          if (result !== undefined) {
+          const { data } = await compose(handlers);
+          if (data !== undefined) {
             const { next } = await compose(endHandlers);
             if (next) {
-              send(res, 200, result);
-              return { next: false, result };
+              send(res, 200, data);
+              return { data, next: false };
             }
           }
           return { next: true };
@@ -76,12 +55,10 @@ class Restar {
 
         async function compose(handlers) {
           for (let handler of handlers) {
-            const result = await promis(handler, req, res);
-            if (result !== undefined) {
-              return { next: false, result }; // !next
-            }
+            const { next, data } = await promis(handler, req, res);
+            if (!next) return { next: false, data };
           }
-          return { next: true }; // next
+          return { next: true };
         }
       });
     };
@@ -105,12 +82,8 @@ const nameEnum = { use: 'preHandlers', end: 'endHandlers', catch: 'errHandlers' 
 
 ['get', 'post', 'put', 'head', 'delete', 'options', 'all'].forEach(method => {
   Restar.prototype[method] = function(path, ...payloads) {
-    if (typeof path !== 'string') {
-      throw new TypeError('path should be type of string');
-    }
-    if (!path.startsWith('/')) {
-      throw new Error('path should start with /');
-    }
+    if (typeof path !== 'string') throw new TypeError('path should be a string');
+    if (!path.startsWith('/')) throw new Error('path should start with /');
     const handler = this.handlers[path];
     if (handler) {
       handler[method] = payloads;
