@@ -84,7 +84,7 @@ app.use(serveStatic(path.join(__dirname, 'public')));
 // app.use('/doc', routeStatic('/doc'), serveStatic(path.join(__dirname, '../public', 'doc')));
 
 function routeStatic(path) {
-  return function(req, res) {
+  return function(req, res, next) {
     const tail = req.url.split(path)[1];
     if (!tail.includes('/')) {
       res.statusCode = 302;
@@ -92,6 +92,7 @@ function routeStatic(path) {
       res.end();
     } else {
       req.url = req.url.replace(path, '');
+      next();
     }
   };
 }
