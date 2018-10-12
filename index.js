@@ -8,6 +8,10 @@ const parse = require('./lib/parse');
 const match = require('./lib/match');
 const promis = require('./lib/promis');
 
+const HOOKS = ['use', 'end', 'catch'];
+const NAME_ENUM = { use: 'preHandlers', end: 'endHandlers', catch: 'errHandlers' };
+const METHODS = ['get', 'post', 'put', 'head', 'delete', 'options', 'all'];
+
 class Restar {
   constructor() {
     this.handlers = { '/': { get: [() => 'Hello Restar!'] } };
@@ -64,11 +68,9 @@ class Restar {
   }
 }
 
-const nameEnum = { use: 'preHandlers', end: 'endHandlers', catch: 'errHandlers' };
-
-['use', 'end', 'catch'].forEach(hook => {
+HOOKS.forEach(hook => {
   Restar.prototype[hook] = function(path, ...payloads) {
-    const proto = nameEnum[hook];
+    const proto = NAME_ENUM[hook];
     if (typeof path === 'function') {
       this[proto]['/'] = this[proto]['/'].concat(path).concat(payloads);
     } else if (!path.startsWith('/')) {
@@ -79,7 +81,7 @@ const nameEnum = { use: 'preHandlers', end: 'endHandlers', catch: 'errHandlers' 
   };
 });
 
-['get', 'post', 'put', 'head', 'delete', 'options', 'all'].forEach(method => {
+METHODS.forEach(method => {
   Restar.prototype[method] = function(path, ...payloads) {
     if (typeof path !== 'string') throw new TypeError('path should be a string');
     if (!path.startsWith('/')) throw new Error('path should start with /');

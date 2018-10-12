@@ -1,6 +1,6 @@
 {
   "name": "restar",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "web library for rest api",
   "main": "index.js",
   "directories": {
@@ -27,9 +27,7 @@
     "url": "https://github.com/cooperhsiung/restar/issues"
   },
   "homepage": "https://github.com/cooperhsiung/restar#readme",
-  "dependencies": {
-    "serve-static": "^1.13.2"
-  },
+  "dependencies": {},
   "devDependencies": {
     "chai": "^4.1.2",
     "mocha": "^5.2.0",

@@ -81,17 +81,19 @@ function sleep(delay = 1000) {
 const serveStatic = require('serve-static');
 app.use(serveStatic(path.join(__dirname, 'public')));
 /*serve static with route*/
-// app.use('/doc', routeStatic, serveStatic(path.join(__dirname, 'public', 'doc')));
+// app.use('/doc', routeStatic('/doc'), serveStatic(path.join(__dirname, '../public', 'doc')));
 
-function routeStatic(req, res) {
-  const tail = req.url.split(req.path)[1];
-  if (!tail.includes('/')) {
-    res.statusCode = 302;
-    res.setHeader('Location', (req.path + '/' + tail).replace('//', '/'));
-    res.end();
-  } else {
-    req.url = req.url.replace(req.path, '');
-  }
+function routeStatic(path) {
+  return function(req, res) {
+    const tail = req.url.split(path)[1];
+    if (!tail.includes('/')) {
+      res.statusCode = 302;
+      res.setHeader('Location', (path + '/' + tail).replace('//', '/'));
+      res.end();
+    } else {
+      req.url = req.url.replace(path, '');
+    }
+  };
 }
 ```
 
