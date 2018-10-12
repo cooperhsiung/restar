@@ -109,10 +109,10 @@ app.use((req, res) => {
   res.setHeader('X-Powered-By', 'Restar');
 });
 
-// equal to res.json({ name: 'restar' })
+// equal to res.json({ name: 'restar' }) in express
 app.get('/test', () => ({ name: 'restar' }));
 
-// you can retrieve params by deconstructing
+// you can retrieve parameters by deconstructing
 // (req,res)-({query,body})-({param:assign(query,body)})
 app.post('/test', ({ param: { name } }) => {
   return name || null;
