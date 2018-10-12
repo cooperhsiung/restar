@@ -13,9 +13,9 @@ Web library for rest api, async/await supported, simplistic with zero dependenci
 npm i restar -S
 ```
 
-## Advantages
+## Benefits
 
-- respond elegantly
+- **respond elegantly**
 
 ```javascript
 app.get('/hello', () => {
@@ -24,7 +24,7 @@ app.get('/hello', () => {
 });
 ```
 
-- comprehensible middleware
+- **comprehensible middleware**
 
 ```javascript
 app.use(req => {
@@ -45,7 +45,7 @@ app.end((req, res) => {
 // });
 ```
 
-- error handling elegantly
+- **error handling elegantly**
 
 ```javascript
 app.get('/test', () => {
@@ -56,13 +56,13 @@ app.catch(e => (req, res) => {
   return e.message || 'an error';
 });
 
-/* catch errors in route*/
+/* catch errors with route*/
 // app.catch('/test', e => (req, res) => {
 //   return e.message + '2' || 'an error';
 // });
 ```
 
-- async/await supported
+- **async/await supported**
 
 ```javascript
 app.get('/sleep', async () => {
@@ -75,13 +75,24 @@ function sleep(delay = 1000) {
 }
 ```
 
-- mount static directory with route
+- **mount static directory with route**
 
 ```javascript
 const serveStatic = require('serve-static');
 app.use(serveStatic(path.join(__dirname, 'public')));
-/*serve static in route*/
+/*serve static with route*/
 // app.use('/doc', routeStatic, serveStatic(path.join(__dirname, 'public', 'doc')));
+
+function routeStatic(req, res) {
+  const tail = req.url.split(req.path)[1];
+  if (!tail.includes('/')) {
+    res.statusCode = 302;
+    res.setHeader('Location', (req.path + '/' + tail).replace('//', '/'));
+    res.end();
+  } else {
+    req.url = req.url.replace(req.path, '');
+  }
+}
 ```
 
 ## Usage
@@ -140,7 +151,7 @@ function sleep(delay = 1000) {
 
 ### app.use((req,res,next?)=>{})
 
-Like express middleware
+Like `express` middleware
 
 ```javascript
 const serveStatic = require('serve-static');
@@ -149,7 +160,7 @@ app.use(serveStatic(path.join(__dirname, 'public')));
 
 ### app.end((req,res,next?)=>{})
 
-Like express middleware, execute after route handling
+Like `express` middleware, execute after route handling
 
 ```javascript
 app.end((req, res) => {
@@ -159,7 +170,7 @@ app.end((req, res) => {
 
 ### app.catch(e=>(req,res,next?)=>{})
 
-error handling
+Error handling
 
 ```javascript
 app.catch(e => () => {
