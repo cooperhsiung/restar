@@ -192,7 +192,7 @@ https://github.com/cooperhsiung/restar-examples
 
 - when existing massive routes, it will hurt the preformance with `path-to-regex`
 
-In view of the above, in most cases we may not need path-to-regex
+In view of the above, in most cases we may not need `path-to-regex` in restful web application
 
 ## License
 
