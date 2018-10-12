@@ -35,25 +35,24 @@ class Restar {
 
       reply(req, res, async () => {
         try {
-          if (!(await compose(preHandlers)).next) return;
-          const { next } = await dispose(handlers, endHandlers);
-          if (next) send(res, 404, 'Not Found');
-        } catch (e) {
-          // console.log(e);
-          const { next } = await dispose(buildErrHandlers(e), endHandlers);
-          if (next) send(res, 500, 'Internal Server Error');
-        }
+          const { next } = await compose(preHandlers);
+          if (!next) return;
 
-        async function dispose(handlers, endHandlers) {
           const { data } = await compose(handlers);
           if (data !== undefined) {
-            const { next } = await compose(endHandlers);
-            if (next) {
-              send(res, 200, data);
-              return { data, next: false };
-            }
+            await compose(endHandlers);
+            return send(res, 200, data);
           }
-          return { next: true };
+
+          send(res, 404, 'Not Found');
+        } catch (e) {
+          const { data } = await compose(buildErrHandlers(e));
+          if (data !== undefined) {
+            await compose(endHandlers);
+            return send(res, 200, data);
+          }
+
+          send(res, 500, 'Internal Server Error');
         }
 
         async function compose(handlers) {
