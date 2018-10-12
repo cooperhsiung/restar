@@ -8,8 +8,11 @@ export declare class Restar {
 
   fire(): RequestListener;
 
+  use(handler: RequestHandler): void;
   use(path: string, handler: RequestHandler): void;
+  end(handler: RequestHandler): void;
   end(path: string, handler: RequestHandler): void;
+  catch(handler: ErrorHandler): void | string | Object | Buffer | ReadStream;
   catch(path: string, handler: ErrorHandler): void | string | Object | Buffer | ReadStream;
 
   get(path: string, handler: RequestHandler): void | string | Object | Buffer | ReadStream;
