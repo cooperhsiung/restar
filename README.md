@@ -187,6 +187,12 @@ Looking for more usages and examples
 
 https://github.com/cooperhsiung/restar-examples
 
+## Boilerplate
+
+Restar app boilerplate
+
+https://github.com/cooperhsiung/restar-kit
+
 ## Caveats
 
 `path-to-regex` is unsupported
